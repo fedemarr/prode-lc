@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String     @unique
+  phone        String
+  passwordHash String
+  role         Role       @default(USER)
+  status       UserStatus @default(PENDING)
+  avatarUrl    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  predictions        Prediction[]
+  specialPredictions SpecialPrediction[]
+  leaderboard        LeaderboardEntry[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Tournament {
+  id            String           @id @default(uuid())
+  name          String
+  organization  String
+  season        String
+  status        TournamentStatus @default(DRAFT)
+  startsAt      DateTime
+  endsAt        DateTime
+  scoringConfig Json
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  matches          Match[]
+  specialQuestions SpecialQuestion[]
+  leaderboard      LeaderboardEntry[]
+}
+
+enum TournamentStatus {
+  DRAFT
+  ACTIVE
+  FINISHED
+}
+
+model Team {
+  id           String  @id @default(uuid())
+  name         String
+  abbreviation String  @db.VarChar(5)
+  flag         String?
+  group        String?
+
+  homeMatches Match[] @relation("HomeTeam")
+  awayMatches Match[] @relation("AwayTeam")
+}
+
+model Match {
+  id           String      @id @default(uuid())
+  tournamentId String
+  homeTeamId   String
+  awayTeamId   String
+  phase        MatchPhase
+  groupName    String?
+  roundLabel   String
+  venue        String
+  scheduledAt  DateTime
+  status       MatchStatus @default(PENDING)
+  homeScore    Int?
+  awayScore    Int?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  tournament  Tournament   @relation(fields: [tournamentId], references: [id])
+  homeTeam    Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam    Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  predictions Prediction[]
+}
+
+enum MatchPhase {
+  GROUP
+  R32
+  R16
+  QF
+  SF
+  FINAL
+}
+
+enum MatchStatus {
+  PENDING
+  LIVE
+  FINISHED
+}
+
+model Prediction {
+  id           String      @id @default(uuid())
+  userId       String
+  matchId      String
+  tournamentId String
+  homeScore    Int
+  awayScore    Int
+  pointsEarned Int?
+  resultType   ResultType?
+  submittedAt  DateTime    @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  match Match @relation(fields: [matchId], references: [id])
+
+  @@unique([userId, matchId])
+}
+
+enum ResultType {
+  EXACT
+  WINNER
+  WRONG
+}
+
+model SpecialQuestion {
+  id           String  @id @default(uuid())
+  tournamentId String
+  question     String
+  points       Int     @default(10)
+  answer       String?
+  orderIndex   Int     @default(0)
+  createdAt    DateTime @default(now())
+
+  tournament  Tournament        @relation(fields: [tournamentId], references: [id])
+  predictions SpecialPrediction[]
+}
+
+model SpecialPrediction {
+  id           String   @id @default(uuid())
+  userId       String
+  questionId   String
+  answer       String
+  isCorrect    Boolean?
+  pointsEarned Int?
+  submittedAt  DateTime @default(now())
+
+  user     User            @relation(fields: [userId], references: [id])
+  question SpecialQuestion @relation(fields: [questionId], references: [id])
+
+  @@unique([userId, questionId])
+}
+
+model LeaderboardEntry {
+  id           String @id @default(uuid())
+  userId       String
+  tournamentId String
+  phase        String
+  points       Int    @default(0)
+  exactHits    Int    @default(0)
+  winnerHits   Int    @default(0)
+  rankPosition Int    @default(0)
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id])
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+
+  @@unique([userId, tournamentId, phase])
+}
