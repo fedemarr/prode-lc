@@ -9,14 +9,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Borrar en orden (FK constraints)
-  const [sp, pred, lb, users] = await Promise.all([
+  const [sp, pred, lb] = await Promise.all([
     prisma.specialPrediction.deleteMany({}),
     prisma.prediction.deleteMany({}),
     prisma.leaderboardEntry.deleteMany({}),
   ]);
 
   const deletedUsers = await prisma.user.deleteMany({
-    where: { role: "USER" }, // no borra el admin
+    where: { role: "USER" },
   });
 
   return NextResponse.json({
