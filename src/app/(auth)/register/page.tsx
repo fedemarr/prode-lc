@@ -38,7 +38,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center py-6 px-4 relative overflow-hidden"
-      style={{ background: "linear-gradient(145deg, #0F2570 0%, #1A3FA8 40%, #1E50CC 70%, #0F2570 100%)" }}>
+      style={{ background: "linear-gradient(160deg, #1565C0 0%, #1976D2 30%, #2196F3 60%, #1565C0 100%)" }}>
 
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full border border-white/8" />
