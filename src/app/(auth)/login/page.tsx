@@ -46,13 +46,13 @@ export default function LoginPage() {
         </div>
         <div className="relative z-10 flex flex-col items-center gap-6 text-center">
           {/* Logo */}
-          <div className="w-32 h-32 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden">
+          <div className="w-36 h-36 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-2xl shadow-black/40 border-4 border-white/30">
             <Image
               src="/logo.png"
               alt="Club Los Cedros"
-              width={112}
-              height={112}
-              className="object-contain"
+              width={120}
+              height={120}
+              className="object-contain w-[90%] h-[90%]"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
           </div>
@@ -72,13 +72,13 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
         {/* Mobile logo */}
         <div className="flex flex-col items-center mb-8 md:hidden">
-          <div className="w-20 h-20 rounded-2xl cedros-gradient border border-brand-blue-light/50 flex items-center justify-center overflow-hidden mb-3">
+          <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center overflow-hidden mb-3 shadow-xl border-4 border-brand-blue/40">
             <Image
               src="/logo.png"
               alt="Club Los Cedros"
-              width={72}
-              height={72}
-              className="object-contain"
+              width={68}
+              height={68}
+              className="object-contain w-[85%] h-[85%]"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
           </div>
