@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Loader2, User, Mail, Phone, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,113 +12,97 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    firstName: "", lastName: "", email: "", phone: "", password: "", confirmPassword: "",
-  });
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", password: "", confirmPassword: "" });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (form.password !== form.confirmPassword) {
-      toast({ title: "Las contraseñas no coinciden", variant: "destructive" });
-      return;
-    }
+    if (form.password !== form.confirmPassword) { toast({ title: "Las contraseñas no coinciden", variant: "destructive" }); return; }
     setLoading(true);
     const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone, password: form.password }),
     });
     const data = await res.json();
     setLoading(false);
-    if (!res.ok) {
-      toast({ title: data.error, variant: "destructive" });
-      return;
-    }
+    if (!res.ok) { toast({ title: data.error, variant: "destructive" }); return; }
     router.push("/login?registered=1");
   }
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const field = (icon: React.ReactNode, placeholder: string, value: string, onChange: (v: string) => void, type = "text", required = true) => (
+    <div className="relative">
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">{icon}</div>
+      <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} required={required}
+        className="w-full h-11 pl-10 pr-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:outline-none focus:border-brand-yellow focus:bg-white/15 transition-all text-sm" />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#080C18] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl cedros-gradient border border-brand-blue-light/40 flex items-center justify-center overflow-hidden mb-4">
-            <Image src="/logo.png" alt="Club Los Cedros" width={56} height={56} className="object-contain"
+    <div className="min-h-screen w-full flex items-center justify-center py-6 px-4 relative overflow-hidden"
+      style={{ background: "linear-gradient(145deg, #0F2570 0%, #1A3FA8 40%, #1E50CC 70%, #0F2570 100%)" }}>
+
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full border border-white/8" />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full border border-white/8" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="flex flex-col items-center mb-5">
+          <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-xl border-4 border-white/30 mb-3">
+            <Image src="/logo.png" alt="Club Los Cedros" width={68} height={68} className="object-contain w-[85%] h-[85%]"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
           </div>
           <h1 className="font-outfit text-2xl font-black text-white">Crear cuenta</h1>
-          <p className="text-white/40 text-sm mt-1">Prode Mundial 2026 · Club Los Cedros</p>
+          <p className="text-white/50 text-xs mt-0.5">Prode Mundial 2026 · Club Los Cedros</p>
         </div>
 
-        <div className="bg-[#0F1A2E] border border-white/8 rounded-2xl p-6 space-y-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-white/50 text-xs uppercase tracking-wider">Nombre</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
-                  <Input placeholder="Juan" value={form.firstName} onChange={set("firstName")}
-                    className="pl-9 bg-white/5 border-white/10 h-11" required />
-                </div>
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-2xl space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-white/60 text-[10px] uppercase tracking-wider mb-1 block">Nombre</Label>
+                {field(<User className="w-3.5 h-3.5" />, "Juan", form.firstName, (v) => setForm(f => ({ ...f, firstName: v })))}
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/50 text-xs uppercase tracking-wider">Apellido</Label>
-                <Input placeholder="Pérez" value={form.lastName} onChange={set("lastName")}
-                  className="bg-white/5 border-white/10 h-11" required />
+              <div>
+                <Label className="text-white/60 text-[10px] uppercase tracking-wider mb-1 block">Apellido</Label>
+                {field(<User className="w-3.5 h-3.5" />, "Pérez", form.lastName, (v) => setForm(f => ({ ...f, lastName: v })))}
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-white/50 text-xs uppercase tracking-wider">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
-                <Input type="email" placeholder="tu@email.com" value={form.email} onChange={set("email")}
-                  className="pl-9 bg-white/5 border-white/10 h-11" required />
+            <div>
+              <Label className="text-white/60 text-[10px] uppercase tracking-wider mb-1 block">Email</Label>
+              {field(<Mail className="w-3.5 h-3.5" />, "tu@email.com", form.email, (v) => setForm(f => ({ ...f, email: v })), "email")}
+            </div>
+
+            <div>
+              <Label className="text-white/60 text-[10px] uppercase tracking-wider mb-1 block">Teléfono</Label>
+              {field(<Phone className="w-3.5 h-3.5" />, "11 1234 5678", form.phone, (v) => setForm(f => ({ ...f, phone: v })), "tel")}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-white/60 text-[10px] uppercase tracking-wider mb-1 block">Contraseña</Label>
+                {field(<Lock className="w-3.5 h-3.5" />, "Mín. 6", form.password, (v) => setForm(f => ({ ...f, password: v })), "password")}
+              </div>
+              <div>
+                <Label className="text-white/60 text-[10px] uppercase tracking-wider mb-1 block">Confirmar</Label>
+                {field(<Lock className="w-3.5 h-3.5" />, "Repetir", form.confirmPassword, (v) => setForm(f => ({ ...f, confirmPassword: v })), "password")}
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-white/50 text-xs uppercase tracking-wider">Teléfono</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
-                <Input type="tel" placeholder="11 1234 5678" value={form.phone} onChange={set("phone")}
-                  className="pl-9 bg-white/5 border-white/10 h-11" required />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-white/50 text-xs uppercase tracking-wider">Contraseña</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
-                  <Input type="password" placeholder="Min. 6 caracteres" value={form.password} onChange={set("password")}
-                    className="pl-9 bg-white/5 border-white/10 h-11" required minLength={6} />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/50 text-xs uppercase tracking-wider">Confirmar</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
-                  <Input type="password" placeholder="Repetir" value={form.confirmPassword} onChange={set("confirmPassword")}
-                    className="pl-9 bg-white/5 border-white/10 h-11" required />
-                </div>
-              </div>
-            </div>
-
-            <Button type="submit" disabled={loading}
-              className="w-full h-11 cedros-gradient hover:opacity-90 text-white font-semibold border-0 shadow-lg shadow-brand-blue/25 mt-2">
-              {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            <button type="submit" disabled={loading}
+              className="w-full h-11 rounded-xl font-bold text-[#0F2570] transition-all disabled:opacity-60 flex items-center justify-center gap-2 shadow-lg mt-1"
+              style={{ background: "linear-gradient(135deg, #F5C400, #FFD740)" }}>
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Registrarme
-            </Button>
+            </button>
           </form>
 
-          <p className="text-center text-sm text-white/40 pt-2 border-t border-white/8">
-            ¿Ya tenés cuenta?{" "}
-            <Link href="/login" className="text-brand-yellow hover:text-brand-yellow-light font-semibold">Ingresar</Link>
-          </p>
+          <div className="pt-3 border-t border-white/10 text-center">
+            <p className="text-white/50 text-sm">
+              ¿Ya tenés cuenta?{" "}
+              <Link href="/login" className="text-brand-yellow font-bold hover:text-brand-yellow-light">Ingresar</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
