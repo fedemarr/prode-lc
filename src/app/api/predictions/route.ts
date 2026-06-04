@@ -20,10 +20,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "El período de pronóstico cerró" }, { status: 400 });
   }
 
-  const prediction = await prisma.prediction.upsert({
+  // Solo se permite UN pronóstico por partido — no se puede editar
+  const existing = await prisma.prediction.findUnique({
     where: { userId_matchId: { userId: session.user.id, matchId } },
-    update: { homeScore: Number(homeScore), awayScore: Number(awayScore) },
-    create: {
+  });
+  if (existing) {
+    return NextResponse.json({ error: "Ya enviaste tu pronóstico para este partido. No se puede modificar." }, { status: 400 });
+  }
+
+  const prediction = await prisma.prediction.create({
+    data: {
       userId: session.user.id,
       matchId,
       tournamentId: match.tournamentId,

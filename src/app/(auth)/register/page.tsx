@@ -25,7 +25,7 @@ export default function RegisterPage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) { toast({ title: data.error, variant: "destructive" }); return; }
-    router.push("/login?registered=1");
+    router.push("/register/success");
   }
 
   const field = (icon: React.ReactNode, placeholder: string, value: string, onChange: (v: string) => void, type = "text", required = true) => (
