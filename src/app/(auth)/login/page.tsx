@@ -47,10 +47,10 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[360px] mx-4">
         {/* Logo — BIG */}
         <div className="flex flex-col items-center mb-7">
-          <div className="w-40 h-40 rounded-full bg-white flex items-center justify-center shadow-2xl border-[6px] border-white/50 mb-4"
-            style={{ boxShadow: "0 0 0 4px rgba(255,255,255,0.15), 0 20px 60px rgba(0,0,0,0.3)" }}>
-            <Image src="/logo.png" alt="Club Los Cedros" width={136} height={136}
-              className="object-contain w-[88%] h-[88%]" priority
+          <div className="w-40 h-40 rounded-full overflow-hidden mb-4"
+            style={{ boxShadow: "0 0 0 4px rgba(255,255,255,0.25), 0 0 0 8px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.35)" }}>
+            <Image src="/logo.png" alt="Club Los Cedros" width={160} height={160}
+              className="w-full h-full object-cover" priority
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
           </div>
           <h1 className="font-outfit text-4xl font-black text-white tracking-tight drop-shadow-lg">ProdeClub</h1>
