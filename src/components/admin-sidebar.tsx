@@ -2,19 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  Trophy,
-  Star,
-  Download,
-  LogOut,
-  Shield,
-  Target,
-} from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Trophy, Star, Download, LogOut, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -28,33 +19,32 @@ const navItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
-
   return (
-    <aside className="w-60 min-h-screen bg-[#0D1421] border-r border-white/8 flex flex-col p-4">
-      <div className="flex items-center gap-3 px-2 mb-8">
-        <div className="w-8 h-8 rounded-lg bg-[#00C27C]/20 flex items-center justify-center">
-          <Shield className="w-4 h-4 text-[#00C27C]" />
-        </div>
-        <div>
-          <p className="font-outfit font-bold text-sm text-white">Admin Panel</p>
-          <p className="text-xs text-white/40">Club Los Cedros</p>
+    <aside className="w-60 min-h-screen bg-[#060A14] border-r border-white/6 flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b border-white/6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl cedros-gradient flex items-center justify-center overflow-hidden flex-shrink-0">
+            <Image src="/logo.png" alt="Logo" width={36} height={36} className="object-contain"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          </div>
+          <div>
+            <p className="font-outfit font-bold text-sm text-white">Admin Panel</p>
+            <p className="text-[10px] text-white/35">Club Los Cedros</p>
+          </div>
         </div>
       </div>
 
-      <nav className="flex flex-col gap-1 flex-1">
+      {/* Nav */}
+      <nav className="flex flex-col gap-0.5 p-3 flex-1">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+            <Link key={href} href={href}
+              className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                 active
-                  ? "bg-[#00C27C]/15 text-[#00C27C] border border-[#00C27C]/20"
-                  : "text-white/50 hover:text-white hover:bg-white/5"
-              )}
-            >
+                  ? "bg-brand-blue text-white shadow-lg shadow-brand-blue/30"
+                  : "text-white/45 hover:text-white hover:bg-white/5")}>
               <Icon className="w-4 h-4 flex-shrink-0" />
               {label}
             </Link>
@@ -62,13 +52,15 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      <button
-        onClick={() => signOut({ callbackUrl: "/login" })}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/30 hover:text-[#FF453A] hover:bg-[#FF453A]/10 transition-all w-full"
-      >
-        <LogOut className="w-4 h-4" />
-        Salir
-      </button>
+      {/* Footer */}
+      <div className="p-3 border-t border-white/6">
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/30 hover:text-brand-red hover:bg-brand-red/10 transition-all w-full">
+          <LogOut className="w-4 h-4" />
+          Cerrar sesión
+        </button>
+      </div>
     </aside>
   );
 }

@@ -2,59 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap");
 
 @layer base {
   :root {
-    --background: 222 47% 7%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 13%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 158 100% 38%;
+    --background: 220 60% 7%;
+    --foreground: 0 0% 98%;
+    --card: 220 55% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 220 55% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 222 73% 38%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 222 47% 18%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 222 47% 18%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 158 100% 38%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 222 47% 20%;
-    --input: 222 47% 18%;
-    --ring: 158 100% 38%;
+    --secondary: 220 55% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 220 55% 16%;
+    --muted-foreground: 215 20% 60%;
+    --accent: 46 100% 48%;
+    --accent-foreground: 220 60% 7%;
+    --destructive: 4 74% 54%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 40% 18%;
+    --input: 220 55% 14%;
+    --ring: 222 73% 50%;
     --radius: 0.75rem;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
   body {
     @apply bg-background text-foreground font-dm-sans;
-    background-color: #0A0E1A;
+    background-color: #080C18;
+    background-image: radial-gradient(ellipse at 20% 0%, rgba(26,63,168,0.12) 0%, transparent 50%),
+                      radial-gradient(ellipse at 80% 100%, rgba(245,196,0,0.06) 0%, transparent 50%);
   }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-outfit;
-  }
+  h1, h2, h3, h4, h5, h6 { @apply font-outfit; }
 }
 
 @layer components {
   .glass-card {
-    background: rgba(26, 34, 53, 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 26, 46, 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
   }
 
   .live-dot {
     @apply inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse-slow;
   }
 
-  .score-btn {
-    @apply w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all;
-    @apply bg-secondary border border-border hover:border-brand-green hover:text-brand-green;
+  .cedros-gradient {
+    background: linear-gradient(135deg, #1A3FA8 0%, #0F2570 100%);
+  }
+
+  .cedros-gradient-yellow {
+    background: linear-gradient(135deg, #F5C400 0%, #E5A800 100%);
   }
 }
