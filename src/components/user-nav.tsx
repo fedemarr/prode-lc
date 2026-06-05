@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, Trophy, BarChart2, User } from "lucide-react";
+import { Home, Calendar, Trophy, BarChart2, User, Gift, BookOpen, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -10,7 +10,19 @@ const navItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
   { href: "/matches", label: "Partidos", icon: Calendar },
   { href: "/ranking", label: "Ranking", icon: Trophy },
-  { href: "/stats", label: "Stats", icon: BarChart2 },
+  { href: "/prizes", label: "Premios", icon: Gift },
+  { href: "/profile", label: "Perfil", icon: User },
+];
+
+const sidebarItems = [
+  { href: "/dashboard", label: "Inicio", icon: Home },
+  { href: "/matches", label: "Partidos", icon: Calendar },
+  { href: "/ranking", label: "Ranking", icon: Trophy },
+  { href: "/results", label: "Resultados", icon: BarChart2 },
+  { href: "/history", label: "Historial", icon: BookOpen },
+  { href: "/stats", label: "Estadísticas", icon: BarChart2 },
+  { href: "/prizes", label: "Premios", icon: Gift },
+  { href: "/rules", label: "Reglas", icon: BookOpen },
   { href: "/profile", label: "Perfil", icon: User },
 ];
 
@@ -39,7 +51,7 @@ export function UserSidebar() {
   const pathname = usePathname();
   return (
     <aside className="hidden md:flex flex-col w-60 min-h-screen bg-[#0A1220] border-r border-white/6 p-4">
-      <Link href="/dashboard" className="flex items-center gap-3 px-2 mb-8">
+      <Link href="/dashboard" className="flex items-center gap-3 px-2 mb-6">
         <div className="w-9 h-9 rounded-xl cedros-gradient flex items-center justify-center overflow-hidden flex-shrink-0">
           <Image src="/logo.png" alt="Logo" width={32} height={32} className="object-contain"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -50,8 +62,8 @@ export function UserSidebar() {
         </div>
       </Link>
 
-      <nav className="flex flex-col gap-1">
-        {navItems.map(({ href, label, icon: Icon }) => {
+      <nav className="flex flex-col gap-0.5">
+        {sidebarItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
           return (
             <Link key={href} href={href}
@@ -73,7 +85,7 @@ export function UserSidebar() {
             pathname === "/special"
               ? "bg-brand-yellow/20 text-brand-yellow border border-brand-yellow/30"
               : "text-brand-yellow/60 hover:text-brand-yellow hover:bg-brand-yellow/10")}>
-          <Trophy className="w-4 h-4" />
+          <Star className="w-4 h-4" />
           Pronósticos Especiales
         </Link>
       </div>
