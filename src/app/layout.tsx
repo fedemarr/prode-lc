@@ -15,8 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="dark">
-      <body className="min-h-screen bg-[#0A0E1A] text-white antialiased">
+    <html lang="es" className="dark bg-[#080C18]">
+      <body className="min-h-screen bg-[#080C18] text-white antialiased overscroll-none">
         <Providers>
           {children}
           <Toaster />
