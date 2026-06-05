@@ -15,8 +15,22 @@ export async function POST(req: NextRequest) {
     prisma.leaderboardEntry.deleteMany({}),
   ]);
 
+  // Solo borra usuarios que NO están pendientes (los de prueba aprobados/rechazados)
+  // Los PENDING son gente real que pidió acceso — se conservan
   const deletedUsers = await prisma.user.deleteMany({
-    where: { role: "USER" },
+    where: { role: "USER", status: { not: "PENDING" } },
+  });
+
+  // Resetear partidos con resultado a PENDING sin score
+  const resetMatches = await prisma.match.updateMany({
+    where: {
+      OR: [
+        { homeScore: { not: null } },
+        { awayScore: { not: null } },
+        { status: { not: "PENDING" } },
+      ],
+    },
+    data: { homeScore: null, awayScore: null, status: "PENDING" },
   });
 
   return NextResponse.json({
@@ -27,6 +41,7 @@ export async function POST(req: NextRequest) {
       leaderboardEntries: lb.count,
       users: deletedUsers.count,
     },
-    msg: "Reset completo — partidos, equipos y torneo intactos ✅",
+    resetMatches: resetMatches.count,
+    msg: "Reset completo — equipos, torneo y preguntas especiales intactos ✅",
   });
 }

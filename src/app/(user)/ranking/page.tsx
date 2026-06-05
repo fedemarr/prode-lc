@@ -1,12 +1,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Trophy, Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default async function RankingPage() {
   const session = await getServerSession(authOptions);
-
   const tournament = await prisma.tournament.findFirst({ where: { status: "ACTIVE" } });
 
   const entries = tournament
@@ -19,68 +17,79 @@ export default async function RankingPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto w-full">
-      <div className="mb-6">
+      <div className="mb-5">
         <h1 className="font-outfit text-2xl font-bold text-white">Ranking General</h1>
-        <p className="text-white/50 text-sm mt-1">Puntuación acumulada del torneo</p>
+        <p className="text-white/40 text-sm mt-1">Puntuación acumulada del torneo</p>
       </div>
 
       {entries.length === 0 ? (
-        <div className="text-center text-white/40 py-12">
-          <Trophy className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>Todavía no hay puntos registrados</p>
+        <div className="text-center text-white/30 py-12">
+          <p className="text-lg">Todavía no hay puntos registrados</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {entries.map((entry, i) => {
-            const rank = i + 1;
-            const isMe = entry.userId === session!.user.id;
-            const total = entry.exactHits + entry.winnerHits;
+          {/* Top 3 podium */}
+          {entries.length >= 3 && (
+            <div className="grid grid-cols-3 gap-2 mb-5">
+              {[entries[1], entries[0], entries[2]].map((entry, i) => {
+                const podiumPos = i === 0 ? 2 : i === 1 ? 1 : 3;
+                const emoji = podiumPos === 1 ? "🥇" : podiumPos === 2 ? "🥈" : "🥉";
+                const isMe = entry.userId === session!.user.id;
+                return (
+                  <div key={entry.id} className={cn(
+                    "rounded-xl border p-3 text-center",
+                    podiumPos === 1 ? "border-brand-yellow/40 bg-brand-yellow/8 order-2" : "border-white/8 bg-[#0F1A2E]",
+                    i === 0 && "order-1", i === 2 && "order-3"
+                  )}>
+                    <p className="text-2xl mb-1">{emoji}</p>
+                    <p className={cn("text-xs font-semibold truncate", isMe ? "text-brand-yellow" : "text-white")}>
+                      {entry.user.firstName}
+                    </p>
+                    <p className={cn("font-outfit text-xl font-black mt-1", podiumPos === 1 ? "text-brand-yellow" : "text-white")}>
+                      {entry.points}
+                    </p>
+                    <p className="text-[9px] text-white/30">pts</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-            return (
-              <div
-                key={entry.id}
-                className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl border transition-all",
-                  isMe
-                    ? "bg-[#00C27C]/10 border-[#00C27C]/30"
-                    : "bg-[#1A2235] border-white/8",
-                  rank === 1 && "border-yellow-500/30 bg-yellow-500/5"
-                )}
-              >
-                {/* Rank */}
-                <div className="w-8 text-center flex-shrink-0">
-                  {rank === 1 ? (
-                    <span className="text-xl">🥇</span>
-                  ) : rank === 2 ? (
-                    <span className="text-xl">🥈</span>
-                  ) : rank === 3 ? (
-                    <span className="text-xl">🥉</span>
-                  ) : (
-                    <span className="font-outfit font-bold text-white/40 text-sm">#{rank}</span>
-                  )}
+          {/* Full table */}
+          <div className="space-y-1.5">
+            {entries.map((entry, i) => {
+              const rank = i + 1;
+              const isMe = entry.userId === session!.user.id;
+              return (
+                <div key={entry.id} className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl border transition-all",
+                  isMe ? "bg-brand-yellow/8 border-brand-yellow/30" : "bg-[#0F1A2E] border-white/6",
+                  rank <= 3 && "border-white/10"
+                )}>
+                  <div className="w-8 text-center flex-shrink-0">
+                    <span className="font-outfit font-black text-sm text-white/50">
+                      {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={cn("font-semibold text-sm truncate", isMe ? "text-brand-yellow" : "text-white")}>
+                      {entry.user.firstName} {entry.user.lastName}
+                      {isMe && <span className="text-xs opacity-60 ml-1">(vos)</span>}
+                    </p>
+                    <p className="text-[10px] text-white/35 mt-0.5">
+                      {entry.exactHits} exactos · {entry.winnerHits} resultado
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className={cn("font-outfit text-xl font-black", isMe ? "text-brand-yellow" : "text-white")}>
+                      {entry.points}
+                    </p>
+                    <p className="text-[10px] text-white/30">pts</p>
+                  </div>
                 </div>
-
-                {/* Name */}
-                <div className="flex-1 min-w-0">
-                  <p className={cn("font-medium text-sm", isMe ? "text-[#00C27C]" : "text-white")}>
-                    {entry.user.firstName} {entry.user.lastName}
-                    {isMe && <span className="text-xs ml-1 opacity-70">(vos)</span>}
-                  </p>
-                  <p className="text-xs text-white/40 mt-0.5">
-                    {entry.exactHits} exactos · {entry.winnerHits} resultados
-                  </p>
-                </div>
-
-                {/* Points */}
-                <div className="text-right flex-shrink-0">
-                  <p className={cn("font-outfit text-xl font-bold", isMe ? "text-[#00C27C]" : "text-white")}>
-                    {entry.points}
-                  </p>
-                  <p className="text-xs text-white/40">pts</p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
