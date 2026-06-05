@@ -2,25 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, Trophy, BarChart2, User, Gift, BookOpen, Star } from "lucide-react";
+import { Home, Calendar, Trophy, BarChart2, User, Gift, BookOpen, Star, Swords } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 const navItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
-  { href: "/matches", label: "Partidos", icon: Calendar },
+  { href: "/matches", label: "Grupos", icon: Calendar },
+  { href: "/knockout", label: "Fase Final", icon: Swords },
   { href: "/ranking", label: "Ranking", icon: Trophy },
-  { href: "/prizes", label: "Premios", icon: Gift },
   { href: "/profile", label: "Perfil", icon: User },
 ];
 
 const sidebarItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
-  { href: "/matches", label: "Partidos", icon: Calendar },
+  { href: "/matches", label: "Partidos - Grupos", icon: Calendar },
+  { href: "/knockout", label: "Fase Final", icon: Swords },
   { href: "/ranking", label: "Ranking", icon: Trophy },
   { href: "/results", label: "Resultados", icon: BarChart2 },
   { href: "/history", label: "Historial", icon: BookOpen },
-  { href: "/stats", label: "Estadísticas", icon: BarChart2 },
   { href: "/prizes", label: "Premios", icon: Gift },
   { href: "/rules", label: "Reglas", icon: BookOpen },
   { href: "/profile", label: "Perfil", icon: User },
