@@ -161,15 +161,15 @@ export function PredictionInput({
 
 function ScoreControl({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       <button onClick={() => onChange(Math.max(0, value - 1))}
-        className="w-9 h-9 rounded-lg bg-white/8 active:bg-white/20 hover:bg-white/15 flex items-center justify-center text-white transition-all border border-white/10 touch-manipulation">
-        <Minus className="w-4 h-4" />
+        className="w-8 h-8 rounded-lg bg-white/8 active:bg-white/20 hover:bg-white/15 flex items-center justify-center text-white transition-all border border-white/10 touch-manipulation flex-shrink-0">
+        <Minus className="w-3.5 h-3.5" />
       </button>
-      <span className="font-outfit text-3xl font-black text-white w-9 text-center tabular-nums">{value}</span>
+      <span className="font-outfit text-3xl font-black text-white w-8 text-center tabular-nums">{value}</span>
       <button onClick={() => onChange(Math.min(20, value + 1))}
-        className="w-9 h-9 rounded-lg bg-white/8 active:bg-white/20 hover:bg-white/15 flex items-center justify-center text-white transition-all border border-white/10 touch-manipulation">
-        <Plus className="w-4 h-4" />
+        className="w-8 h-8 rounded-lg bg-white/8 active:bg-white/20 hover:bg-white/15 flex items-center justify-center text-white transition-all border border-white/10 touch-manipulation flex-shrink-0">
+        <Plus className="w-3.5 h-3.5" />
       </button>
     </div>
   );
