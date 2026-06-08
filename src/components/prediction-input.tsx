@@ -113,16 +113,19 @@ export function PredictionInput({
         </p>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-col items-center gap-2 flex-1">
-          <span className="text-4xl">{homeFlag ?? "🏳️"}</span>
-          <p className="text-xs text-white/60 text-center font-medium">{homeTeamName}</p>
+      <div className="flex items-center justify-center gap-3">
+        {/* Local */}
+        <div className="flex flex-col items-center gap-1.5 w-[120px] shrink-0">
+          <span className="text-3xl">{homeFlag ?? "🏳️"}</span>
+          <p className="text-[11px] text-white/60 text-center font-medium leading-tight line-clamp-2 w-full px-1">{homeTeamName}</p>
           <ScoreControl value={home} onChange={(v) => { setHome(v); setConfirmed(false); }} />
         </div>
-        <div className="text-white/20 text-2xl font-light pb-6">—</div>
-        <div className="flex flex-col items-center gap-2 flex-1">
-          <span className="text-4xl">{awayFlag ?? "🏳️"}</span>
-          <p className="text-xs text-white/60 text-center font-medium">{awayTeamName}</p>
+        {/* Separador */}
+        <div className="text-white/20 text-xl font-light shrink-0 mt-6">—</div>
+        {/* Visitante */}
+        <div className="flex flex-col items-center gap-1.5 w-[120px] shrink-0">
+          <span className="text-3xl">{awayFlag ?? "🏳️"}</span>
+          <p className="text-[11px] text-white/60 text-center font-medium leading-tight line-clamp-2 w-full px-1">{awayTeamName}</p>
           <ScoreControl value={away} onChange={(v) => { setAway(v); setConfirmed(false); }} />
         </div>
       </div>
@@ -158,14 +161,14 @@ export function PredictionInput({
 
 function ScoreControl({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       <button onClick={() => onChange(Math.max(0, value - 1))}
-        className="w-9 h-9 rounded-lg bg-white/8 hover:bg-white/15 flex items-center justify-center text-white transition-all border border-white/10">
+        className="w-9 h-9 rounded-lg bg-white/8 active:bg-white/20 hover:bg-white/15 flex items-center justify-center text-white transition-all border border-white/10 touch-manipulation">
         <Minus className="w-4 h-4" />
       </button>
-      <span className="font-outfit text-3xl font-black text-white w-10 text-center">{value}</span>
+      <span className="font-outfit text-3xl font-black text-white w-9 text-center tabular-nums">{value}</span>
       <button onClick={() => onChange(Math.min(20, value + 1))}
-        className="w-9 h-9 rounded-lg bg-white/8 hover:bg-white/15 flex items-center justify-center text-white transition-all border border-white/10">
+        className="w-9 h-9 rounded-lg bg-white/8 active:bg-white/20 hover:bg-white/15 flex items-center justify-center text-white transition-all border border-white/10 touch-manipulation">
         <Plus className="w-4 h-4" />
       </button>
     </div>
