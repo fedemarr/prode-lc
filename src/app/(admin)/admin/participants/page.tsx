@@ -12,7 +12,7 @@ export default async function ParticipantsPage({ searchParams }: { searchParams:
 
   const participants = await prisma.user.findMany({
     where, orderBy: { createdAt: "desc" },
-    select: { id: true, firstName: true, lastName: true, email: true, phone: true, status: true, createdAt: true, _count: { select: { predictions: true } } },
+    select: { id: true, firstName: true, lastName: true, email: true, phone: true, status: true, chances: true, createdAt: true, _count: { select: { predictions: true } } },
   });
 
   const counts = await prisma.user.groupBy({ by: ["status"], where: { role: "USER" }, _count: true });
@@ -75,7 +75,7 @@ export default async function ParticipantsPage({ searchParams }: { searchParams:
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-white/25">{p._count.predictions} pronósticos · {formatDateTime(p.createdAt)}</span>
-                  <ParticipantActions participantId={p.id} status={p.status} phone={p.phone} name={`${p.firstName} ${p.lastName}`} />
+                  <ParticipantActions participantId={p.id} status={p.status} phone={p.phone} name={`${p.firstName} ${p.lastName}`} chances={p.chances} />
                 </div>
               </div>
             ))}
@@ -108,7 +108,7 @@ export default async function ParticipantsPage({ searchParams }: { searchParams:
                         </Badge>
                       </td>
                       <td className="p-4">
-                        <ParticipantActions participantId={p.id} status={p.status} phone={p.phone} name={`${p.firstName} ${p.lastName}`} />
+                        <ParticipantActions participantId={p.id} status={p.status} phone={p.phone} name={`${p.firstName} ${p.lastName}`} chances={p.chances} />
                       </td>
                     </tr>
                   ))}

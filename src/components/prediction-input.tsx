@@ -16,6 +16,8 @@ interface PredictionInputProps {
   initialAway?: number;
   alreadySubmitted?: boolean;
   disabled?: boolean;
+  chanceNumber?: number;
+  totalChances?: number;
 }
 
 export function PredictionInput({
@@ -28,6 +30,8 @@ export function PredictionInput({
   initialAway = 0,
   alreadySubmitted = false,
   disabled = false,
+  chanceNumber = 1,
+  totalChances = 1,
 }: PredictionInputProps) {
   const { toast } = useToast();
   const [home, setHome] = useState(initialHome);
@@ -45,7 +49,7 @@ export function PredictionInput({
     const res = await fetch("/api/predictions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ matchId, homeScore: home, awayScore: away }),
+      body: JSON.stringify({ matchId, homeScore: home, awayScore: away, chanceNumber }),
     });
     setLoading(false);
 
@@ -103,7 +107,14 @@ export function PredictionInput({
 
   return (
     <div className="bg-[#0F1A2E] border border-white/10 rounded-2xl p-5 space-y-5">
-      <p className="font-outfit font-semibold text-white text-center">Tu pronóstico</p>
+      <div className="flex items-center justify-center gap-2">
+        <p className="font-outfit font-semibold text-white text-center">Tu pronóstico</p>
+        {totalChances > 1 && (
+          <span className="text-xs font-bold bg-brand-yellow/20 text-brand-yellow border border-brand-yellow/30 px-2 py-0.5 rounded-full">
+            Chance {chanceNumber} de {totalChances}
+          </span>
+        )}
+      </div>
 
       {/* Aviso importante */}
       <div className="flex items-start gap-2.5 bg-brand-yellow/10 border border-brand-yellow/30 rounded-xl p-3">

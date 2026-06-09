@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Trophy, Target, TrendingUp, Calendar, Swords, Gift, BookOpen } from "lucide-react";
+import { Trophy, Target, TrendingUp, Calendar, Swords, Gift, BookOpen, Ticket } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ export default async function DashboardPage() {
   const userId = session!.user.id;
   const tournament = await prisma.tournament.findFirst({ where: { status: "ACTIVE" } });
 
-  const [leaderboard, myPredictions, nextMatches] = await Promise.all([
+  const [leaderboard, myPredictions, nextMatches, userInfo] = await Promise.all([
     tournament ? prisma.leaderboardEntry.findFirst({ where: { userId, tournamentId: tournament.id, phase: "total" } }) : null,
     tournament ? prisma.prediction.findMany({ where: { userId, tournamentId: tournament.id }, include: { match: true } }) : [],
     tournament ? prisma.match.findMany({
@@ -20,8 +20,10 @@ export default async function DashboardPage() {
       orderBy: { scheduledAt: "asc" },
       take: 4,
     }) : [],
+    prisma.user.findUnique({ where: { id: userId }, select: { chances: true } }),
   ]);
 
+  const userChances = userInfo?.chances ?? 1;
   const totalPoints = leaderboard?.points ?? 0;
   const rankPosition = leaderboard?.rankPosition ?? 0;
   const exactHits = leaderboard?.exactHits ?? 0;
@@ -43,7 +45,7 @@ export default async function DashboardPage() {
         <StatCard icon={<Trophy className="w-5 h-5 text-brand-yellow" />} label="Puntos" value={totalPoints.toString()} bg="bg-brand-yellow/10 border-brand-yellow/20" text="text-brand-yellow" />
         <StatCard icon={<TrendingUp className="w-5 h-5 text-purple-400" />} label="Posición" value={rankPosition > 0 ? `#${rankPosition}` : "-"} bg="bg-purple-500/10 border-purple-500/20" text="text-purple-300" />
         <StatCard icon={<Target className="w-5 h-5 text-brand-blue-light" />} label="% Aciertos" value={`${accuracy}%`} bg="bg-brand-blue/10 border-brand-blue/20" text="text-brand-blue-light" />
-        <StatCard icon={<Calendar className="w-5 h-5 text-emerald-400" />} label="Pronósticos" value={myPredictions.length.toString()} bg="bg-emerald-500/10 border-emerald-500/20" text="text-emerald-300" />
+        <StatCard icon={<Ticket className="w-5 h-5 text-emerald-400" />} label="Mis chances" value={userChances.toString()} bg="bg-emerald-500/10 border-emerald-500/20" text="text-emerald-300" />
       </div>
 
       {/* Next matches */}

@@ -11,24 +11,36 @@ import { Badge } from "@/components/ui/badge";
 export default async function MatchDetailPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
 
-  const match = await prisma.match.findUnique({
-    where: { id: params.id },
-    include: {
-      homeTeam: true,
-      awayTeam: true,
-      predictions: {
-        where: { userId: session!.user.id },
-        select: { homeScore: true, awayScore: true, pointsEarned: true, resultType: true },
+  const [match, user] = await Promise.all([
+    prisma.match.findUnique({
+      where: { id: params.id },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+        predictions: {
+          where: { userId: session!.user.id },
+          select: { homeScore: true, awayScore: true, pointsEarned: true, resultType: true, chanceNumber: true },
+        },
       },
-    },
-  });
+    }),
+    prisma.user.findUnique({
+      where: { id: session!.user.id },
+      select: { chances: true },
+    }),
+  ]);
 
   if (!match) return notFound();
 
-  const myPrediction = match.predictions[0];
+  const userChances = user?.chances ?? 1;
   const canPredict = match.status === "PENDING" && new Date() < match.scheduledAt;
   const isFinished = match.status === "FINISHED";
   const isLive = match.status === "LIVE";
+
+  // Map predictions by chanceNumber
+  const predByChance: Record<number, typeof match.predictions[0]> = {};
+  for (const p of match.predictions) {
+    predByChance[p.chanceNumber] = p;
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-xl mx-auto w-full">
@@ -82,49 +94,80 @@ export default async function MatchDetailPage({ params }: { params: { id: string
         </div>
       </div>
 
-      {/* Result feedback */}
-      {isFinished && myPrediction?.resultType && (
-        <div className={`rounded-xl p-4 mb-4 text-center border ${
-          myPrediction.resultType === "EXACT"
-            ? "bg-[#00C27C]/10 border-[#00C27C]/30"
-            : myPrediction.resultType === "WINNER"
-            ? "bg-[#FFB800]/10 border-[#FFB800]/30"
-            : "bg-[#FF453A]/10 border-[#FF453A]/30"
-        }`}>
-          <p className={`font-outfit font-bold text-lg ${
-            myPrediction.resultType === "EXACT" ? "text-[#00C27C]"
-            : myPrediction.resultType === "WINNER" ? "text-[#FFB800]"
-            : "text-[#FF453A]"
-          }`}>
-            {myPrediction.resultType === "EXACT" ? "¡Pronóstico exacto! 🎯"
-            : myPrediction.resultType === "WINNER" ? "Resultado correcto ✓"
-            : "Sin puntos ✗"}
-          </p>
-          <p className="text-white/60 text-sm mt-1">
-            {myPrediction.pointsEarned !== null ? `+${myPrediction.pointsEarned} puntos` : ""}
-          </p>
-        </div>
-      )}
+      {/* Prediction forms — one per chance */}
+      <div className="space-y-4">
+        {Array.from({ length: userChances }, (_, i) => i + 1).map((cn) => {
+          const pred = predByChance[cn];
 
-      {/* Prediction input */}
-      {!isFinished && (
-        <PredictionInput
-          matchId={match.id}
-          homeTeamName={match.homeTeam.name}
-          awayTeamName={match.awayTeam.name}
-          homeFlag={match.homeTeam.flag}
-          awayFlag={match.awayTeam.flag}
-          initialHome={myPrediction?.homeScore ?? 0}
-          initialAway={myPrediction?.awayScore ?? 0}
-          disabled={!canPredict}
-        />
-      )}
+          {/* Result feedback for finished matches */}
+          const feedbackBlock = isFinished && pred?.resultType ? (
+            <div className={`rounded-xl p-4 text-center border ${
+              pred.resultType === "EXACT" ? "bg-[#00C27C]/10 border-[#00C27C]/30"
+              : pred.resultType === "WINNER" ? "bg-[#FFB800]/10 border-[#FFB800]/30"
+              : "bg-[#FF453A]/10 border-[#FF453A]/30"
+            }`}>
+              <p className={`font-outfit font-bold text-lg ${
+                pred.resultType === "EXACT" ? "text-[#00C27C]"
+                : pred.resultType === "WINNER" ? "text-[#FFB800]"
+                : "text-[#FF453A]"
+              }`}>
+                {pred.resultType === "EXACT" ? "¡Pronóstico exacto! 🎯"
+                : pred.resultType === "WINNER" ? "Resultado correcto ✓"
+                : "Sin puntos ✗"}
+                {userChances > 1 && ` — Chance ${cn}`}
+              </p>
+              {pred.pointsEarned != null && (
+                <p className="text-white/60 text-sm mt-1">+{pred.pointsEarned} puntos</p>
+              )}
+            </div>
+          ) : null;
 
-      {isFinished && !myPrediction && (
-        <div className="bg-[#1A2235] border border-white/8 rounded-xl p-4 text-center">
-          <p className="text-white/40 text-sm">No hiciste un pronóstico para este partido</p>
-        </div>
-      )}
+          if (isFinished) {
+            return (
+              <div key={cn}>
+                {feedbackBlock}
+                {pred ? (
+                  <PredictionInput
+                    matchId={match.id}
+                    homeTeamName={match.homeTeam.name}
+                    awayTeamName={match.awayTeam.name}
+                    homeFlag={match.homeTeam.flag}
+                    awayFlag={match.awayTeam.flag}
+                    initialHome={pred.homeScore}
+                    initialAway={pred.awayScore}
+                    alreadySubmitted
+                    chanceNumber={cn}
+                    totalChances={userChances}
+                  />
+                ) : (
+                  <div className="bg-[#1A2235] border border-white/8 rounded-xl p-4 text-center">
+                    <p className="text-white/40 text-sm">
+                      No hiciste un pronóstico{userChances > 1 ? ` para la chance ${cn}` : ""}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <PredictionInput
+              key={cn}
+              matchId={match.id}
+              homeTeamName={match.homeTeam.name}
+              awayTeamName={match.awayTeam.name}
+              homeFlag={match.homeTeam.flag}
+              awayFlag={match.awayTeam.flag}
+              initialHome={pred?.homeScore ?? 0}
+              initialAway={pred?.awayScore ?? 0}
+              alreadySubmitted={!!pred}
+              disabled={!canPredict}
+              chanceNumber={cn}
+              totalChances={userChances}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

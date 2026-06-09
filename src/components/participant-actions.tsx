@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X, MessageCircle, Loader2 } from "lucide-react";
+import { Check, X, MessageCircle, Loader2, Ticket, Minus, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,12 +10,15 @@ interface ParticipantActionsProps {
   status: string;
   phone: string;
   name: string;
+  chances: number;
 }
 
-export function ParticipantActions({ participantId, status, phone, name }: ParticipantActionsProps) {
+export function ParticipantActions({ participantId, status, phone, name, chances: initialChances }: ParticipantActionsProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
+  const [chances, setChances] = useState(initialChances);
+  const [chancesLoading, setChancesLoading] = useState(false);
 
   async function updateStatus(newStatus: "APPROVED" | "REJECTED") {
     setLoading(newStatus);
@@ -38,10 +41,51 @@ export function ParticipantActions({ participantId, status, phone, name }: Parti
     router.refresh();
   }
 
+  async function updateChances(newChances: number) {
+    setChancesLoading(true);
+    const res = await fetch(`/api/admin/participants/${participantId}/chances`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chances: newChances }),
+    });
+    setChancesLoading(false);
+
+    if (!res.ok) {
+      toast({ title: "Error", description: "No se pudo actualizar las chances", variant: "destructive" });
+      return;
+    }
+
+    setChances(newChances);
+    toast({ title: `✓ ${name} ahora tiene ${newChances} chance${newChances !== 1 ? "s" : ""}` });
+  }
+
   const waNumber = phone.replace(/\D/g, "");
 
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-2 flex-wrap">
+      {/* Chances editor */}
+      <div className="flex items-center gap-1 bg-brand-yellow/10 border border-brand-yellow/20 rounded-lg px-1.5 py-1">
+        <Ticket className="w-3 h-3 text-brand-yellow flex-shrink-0" />
+        <button
+          onClick={() => chances > 1 && updateChances(chances - 1)}
+          disabled={chancesLoading || chances <= 1}
+          className="w-5 h-5 flex items-center justify-center text-brand-yellow hover:text-white disabled:opacity-30 transition-all"
+        >
+          <Minus className="w-3 h-3" />
+        </button>
+        <span className="font-outfit font-black text-sm text-brand-yellow w-4 text-center tabular-nums">
+          {chancesLoading ? "…" : chances}
+        </span>
+        <button
+          onClick={() => chances < 10 && updateChances(chances + 1)}
+          disabled={chancesLoading || chances >= 10}
+          className="w-5 h-5 flex items-center justify-center text-brand-yellow hover:text-white disabled:opacity-30 transition-all"
+        >
+          <Plus className="w-3 h-3" />
+        </button>
+      </div>
+
+      {/* Status actions */}
       {status !== "APPROVED" && (
         <button
           onClick={() => updateStatus("APPROVED")}

@@ -1,14 +1,14 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { LogOut, User, Mail, Phone, Trophy } from "lucide-react";
+import { LogOut, User, Mail, Phone, Trophy, Ticket } from "lucide-react";
 import { SignOutButton } from "@/components/sign-out-button";
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
   const user = await prisma.user.findUnique({
     where: { id: session!.user.id },
-    select: { firstName: true, lastName: true, email: true, phone: true, createdAt: true },
+    select: { firstName: true, lastName: true, email: true, phone: true, chances: true, createdAt: true },
   });
 
   return (
@@ -36,6 +36,7 @@ export default async function ProfilePage() {
         <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={user?.email ?? ""} />
         <InfoRow icon={<Phone className="w-4 h-4" />} label="Teléfono" value={user?.phone ?? ""} />
         <InfoRow icon={<Trophy className="w-4 h-4" />} label="Miembro desde" value={user?.createdAt.toLocaleDateString("es-AR") ?? ""} />
+        <InfoRow icon={<Ticket className="w-4 h-4" />} label="Chances" value={`${user?.chances ?? 1} chance${(user?.chances ?? 1) !== 1 ? "s" : ""}`} />
       </div>
 
       <SignOutButton />

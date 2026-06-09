@@ -21,6 +21,8 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
+  chances            Int        @default(1)
+
   predictions        Prediction[]
   specialPredictions SpecialPrediction[]
   leaderboard        LeaderboardEntry[]
@@ -119,10 +121,12 @@ model Prediction {
   resultType   ResultType?
   submittedAt  DateTime    @default(now())
 
+  chanceNumber Int        @default(1)
+
   user  User  @relation(fields: [userId], references: [id])
   match Match @relation(fields: [matchId], references: [id])
 
-  @@unique([userId, matchId])
+  @@unique([userId, matchId, chanceNumber])
 }
 
 enum ResultType {
