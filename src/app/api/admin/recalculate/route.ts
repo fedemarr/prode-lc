@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { calculatePoints } from "@/lib/scoring";
 import { rebuildLeaderboard } from "@/lib/leaderboard";
 
 export async function POST(req: NextRequest) {
@@ -14,35 +15,40 @@ export async function POST(req: NextRequest) {
   if (!tournament) return NextResponse.json({ error: "No hay torneo activo" }, { status: 404 });
 
   const config = tournament.scoringConfig as { exact: number; winner: number };
-  const exactPts = config.exact ?? 5;
-  const winnerPts = config.winner ?? 2;
 
-  // Recalculate all predictions for all finished matches at once
-  await prisma.$executeRaw`
-    UPDATE "Prediction" p
-    SET
-      "pointsEarned" = CASE
-        WHEN p."homeScore" = m."homeScore" AND p."awayScore" = m."awayScore" THEN ${exactPts}
-        WHEN SIGN(p."homeScore" - p."awayScore") = SIGN(m."homeScore" - m."awayScore") THEN ${winnerPts}
-        ELSE 0
-      END,
-      "resultType" = CASE
-        WHEN p."homeScore" = m."homeScore" AND p."awayScore" = m."awayScore" THEN 'EXACT'::"ResultType"
-        WHEN SIGN(p."homeScore" - p."awayScore") = SIGN(m."homeScore" - m."awayScore") THEN 'WINNER'::"ResultType"
-        ELSE 'WRONG'::"ResultType"
-      END
-    FROM "Match" m
-    WHERE p."matchId" = m.id
-      AND m."tournamentId" = ${tournament.id}
-      AND m.status = 'FINISHED'::"MatchStatus"
-      AND m."homeScore" IS NOT NULL
-  `;
+  // Get all finished matches
+  const finishedMatches = await prisma.match.findMany({
+    where: { tournamentId: tournament.id, status: "FINISHED" },
+    select: { id: true, homeScore: true, awayScore: true },
+  });
 
+  // Recalculate points for all predictions of all finished matches in parallel
+  await Promise.all(
+    finishedMatches.map(async (match) => {
+      if (match.homeScore === null || match.awayScore === null) return;
+      const predictions = await prisma.prediction.findMany({ where: { matchId: match.id } });
+      await Promise.all(
+        predictions.map((pred) => {
+          const { points, resultType } = calculatePoints(
+            { home: pred.homeScore, away: pred.awayScore },
+            { home: match.homeScore!, away: match.awayScore! },
+            config
+          );
+          return prisma.prediction.update({
+            where: { id: pred.id },
+            data: { pointsEarned: points, resultType },
+          });
+        })
+      );
+    })
+  );
+
+  // Rebuild leaderboard from scratch
   await rebuildLeaderboard(tournament.id);
 
-  const updated = await prisma.leaderboardEntry.count({
+  const usersUpdated = await prisma.leaderboardEntry.count({
     where: { tournamentId: tournament.id, phase: "total" },
   });
 
-  return NextResponse.json({ ok: true, usersUpdated: updated });
+  return NextResponse.json({ ok: true, usersUpdated });
 }
