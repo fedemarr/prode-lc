@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { MatchResultLoader } from "@/components/match-result-loader";
+import { RecalculateButton } from "@/components/recalculate-button";
 import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -20,9 +21,12 @@ export default async function AdminResultsPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto w-full">
-      <div className="mb-6">
-        <h1 className="font-outfit text-2xl font-bold text-white">Cargar Resultados</h1>
-        <p className="text-white/50 text-sm mt-1">Partidos pendientes y en vivo</p>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="font-outfit text-2xl font-bold text-white">Cargar Resultados</h1>
+          <p className="text-white/50 text-sm mt-1">Partidos pendientes y en vivo</p>
+        </div>
+        <RecalculateButton />
       </div>
 
       {matches.length === 0 ? (
