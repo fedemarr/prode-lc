@@ -6,27 +6,32 @@ import { calculatePoints } from "@/lib/scoring";
 import { rebuildLeaderboard } from "@/lib/leaderboard";
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-  const tournament = await prisma.tournament.findFirst({ where: { status: "ACTIVE" } });
-  if (!tournament) return NextResponse.json({ error: "No hay torneo activo" }, { status: 404 });
+    const tournament = await prisma.tournament.findFirst({ where: { status: "ACTIVE" } });
+    if (!tournament) return NextResponse.json({ error: "No hay torneo activo" }, { status: 404 });
 
-  const config = tournament.scoringConfig as { exact: number; winner: number };
+    const config = tournament.scoringConfig as { exact: number; winner: number };
 
-  // Get all finished matches
-  const finishedMatches = await prisma.match.findMany({
-    where: { tournamentId: tournament.id, status: "FINISHED" },
-    select: { id: true, homeScore: true, awayScore: true },
-  });
+    // Get all finished matches with scores
+    const finishedMatches = await prisma.match.findMany({
+      where: { tournamentId: tournament.id, status: "FINISHED" },
+      select: { id: true, homeScore: true, awayScore: true },
+    });
 
-  // Recalculate points for all predictions of all finished matches in parallel
-  await Promise.all(
-    finishedMatches.map(async (match) => {
-      if (match.homeScore === null || match.awayScore === null) return;
-      const predictions = await prisma.prediction.findMany({ where: { matchId: match.id } });
+    // Process each match sequentially to avoid connection pool issues
+    for (const match of finishedMatches) {
+      if (match.homeScore === null || match.awayScore === null) continue;
+
+      const predictions = await prisma.prediction.findMany({
+        where: { matchId: match.id },
+      });
+
+      // Update predictions for this match in parallel (small set per match)
       await Promise.all(
         predictions.map((pred) => {
           const { points, resultType } = calculatePoints(
@@ -40,15 +45,18 @@ export async function POST(req: NextRequest) {
           });
         })
       );
-    })
-  );
+    }
 
-  // Rebuild leaderboard from scratch
-  await rebuildLeaderboard(tournament.id);
+    // Rebuild full leaderboard
+    await rebuildLeaderboard(tournament.id);
 
-  const usersUpdated = await prisma.leaderboardEntry.count({
-    where: { tournamentId: tournament.id, phase: "total" },
-  });
+    const usersUpdated = await prisma.leaderboardEntry.count({
+      where: { tournamentId: tournament.id, phase: "total" },
+    });
 
-  return NextResponse.json({ ok: true, usersUpdated });
+    return NextResponse.json({ ok: true, usersUpdated });
+  } catch (e: any) {
+    console.error("Recalculate error:", e);
+    return NextResponse.json({ error: e?.message ?? "Error interno" }, { status: 500 });
+  }
 }

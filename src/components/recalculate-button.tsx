@@ -16,15 +16,16 @@ export function RecalculateButton() {
     const res = await fetch("/api/admin/recalculate", { method: "POST" });
     setLoading(false);
 
+    const data = await res.json();
+
     if (!res.ok) {
-      toast({ title: "Error al recalcular", variant: "destructive" });
+      toast({ title: "Error al recalcular", description: data?.error ?? "Error interno", variant: "destructive" });
       return;
     }
 
-    const data = await res.json();
     toast({
       title: "✓ Ranking recalculado",
-      description: `${data.matchesProcessed} partidos · ${data.usersUpdated} usuarios actualizados`,
+      description: `${data.usersUpdated} usuarios actualizados`,
     });
     router.refresh();
   }
