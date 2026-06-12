@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X, MessageCircle, Loader2, Ticket, Minus, Plus } from "lucide-react";
+import { Check, X, MessageCircle, Loader2, Ticket, Minus, Plus, KeyRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +19,9 @@ export function ParticipantActions({ participantId, status, phone, name, chances
   const [loading, setLoading] = useState<string | null>(null);
   const [chances, setChances] = useState(initialChances);
   const [chancesLoading, setChancesLoading] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   async function updateStatus(newStatus: "APPROVED" | "REJECTED") {
     setLoading(newStatus);
@@ -59,6 +62,29 @@ export function ParticipantActions({ participantId, status, phone, name, chances
     toast({ title: `✓ ${name} ahora tiene ${newChances} chance${newChances !== 1 ? "s" : ""}` });
   }
 
+  async function savePassword() {
+    if (newPassword.length < 6) {
+      toast({ title: "Error", description: "Mínimo 6 caracteres", variant: "destructive" });
+      return;
+    }
+    setPasswordLoading(true);
+    const res = await fetch(`/api/admin/participants/${participantId}/password`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: newPassword }),
+    });
+    setPasswordLoading(false);
+
+    if (!res.ok) {
+      toast({ title: "Error", description: "No se pudo cambiar la contraseña", variant: "destructive" });
+      return;
+    }
+
+    toast({ title: `✓ Contraseña de ${name} actualizada` });
+    setNewPassword("");
+    setShowPasswordForm(false);
+  }
+
   const waNumber = phone.replace(/\D/g, "");
 
   return (
@@ -84,6 +110,41 @@ export function ParticipantActions({ participantId, status, phone, name, chances
           <Plus className="w-3 h-3" />
         </button>
       </div>
+
+      {/* Password change */}
+      {showPasswordForm ? (
+        <div className="flex items-center gap-1">
+          <input
+            type="text"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Nueva contraseña"
+            autoFocus
+            className="w-32 h-8 px-2 text-xs bg-[#0F1A2E] border border-brand-blue/40 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-brand-blue"
+          />
+          <button
+            onClick={savePassword}
+            disabled={passwordLoading}
+            className="w-8 h-8 rounded-lg bg-brand-blue/20 hover:bg-brand-blue/40 text-brand-blue-light flex items-center justify-center transition-all disabled:opacity-50"
+          >
+            {passwordLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+          </button>
+          <button
+            onClick={() => { setShowPasswordForm(false); setNewPassword(""); }}
+            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 flex items-center justify-center transition-all"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowPasswordForm(true)}
+          title="Cambiar contraseña"
+          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white flex items-center justify-center transition-all"
+        >
+          <KeyRound className="w-3.5 h-3.5" />
+        </button>
+      )}
 
       {/* Status actions */}
       {status !== "APPROVED" && (
