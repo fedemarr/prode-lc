@@ -25,7 +25,7 @@ export function RecalculateButton() {
 
     toast({
       title: "✓ Ranking recalculado",
-      description: `${data.usersUpdated} usuarios actualizados`,
+      description: `${data.matchesProcessed} partidos · ${data.totalPredictions} pronósticos · ${data.usersUpdated} usuarios`,
     });
     router.refresh();
   }

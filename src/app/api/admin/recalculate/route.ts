@@ -52,7 +52,12 @@ export async function POST(req: NextRequest) {
       where: { tournamentId: tournament.id, phase: "total" },
     });
 
-    return NextResponse.json({ ok: true, usersUpdated });
+    const matchesProcessed = finishedMatches.length;
+    const totalPredictions = await prisma.prediction.count({
+      where: { matchId: { in: finishedMatches.map((m) => m.id) } },
+    });
+
+    return NextResponse.json({ ok: true, usersUpdated, matchesProcessed, totalPredictions });
   } catch (e: any) {
     console.error("Recalculate error:", e);
     return NextResponse.json({ error: e?.message ?? "Error interno" }, { status: 500 });
