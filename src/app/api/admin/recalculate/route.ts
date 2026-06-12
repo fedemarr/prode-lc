@@ -31,20 +31,18 @@ export async function POST(req: NextRequest) {
         where: { matchId: match.id },
       });
 
-      // Update predictions for this match in parallel (small set per match)
-      await Promise.all(
-        predictions.map((pred) => {
-          const { points, resultType } = calculatePoints(
-            { home: pred.homeScore, away: pred.awayScore },
-            { home: match.homeScore!, away: match.awayScore! },
-            config
-          );
-          return prisma.prediction.update({
-            where: { id: pred.id },
-            data: { pointsEarned: points, resultType },
-          });
-        })
-      );
+      // Update predictions sequentially to stay within connection pool limit (5)
+      for (const pred of predictions) {
+        const { points, resultType } = calculatePoints(
+          { home: pred.homeScore, away: pred.awayScore },
+          { home: match.homeScore!, away: match.awayScore! },
+          config
+        );
+        await prisma.prediction.update({
+          where: { id: pred.id },
+          data: { pointsEarned: points, resultType },
+        });
+      }
     }
 
     // Rebuild full leaderboard

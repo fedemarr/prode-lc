@@ -21,22 +21,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const config = match.tournament.scoringConfig as { exact: number; winner: number };
 
-  // Update all predictions for this match in parallel
+  // Update predictions sequentially to stay within connection pool limit (5)
   const predictions = await prisma.prediction.findMany({ where: { matchId: match.id } });
 
-  await Promise.all(
-    predictions.map((pred) => {
-      const { points, resultType } = calculatePoints(
-        { home: pred.homeScore, away: pred.awayScore },
-        { home: match.homeScore!, away: match.awayScore! },
-        config
-      );
-      return prisma.prediction.update({
-        where: { id: pred.id },
-        data: { pointsEarned: points, resultType },
-      });
-    })
-  );
+  for (const pred of predictions) {
+    const { points, resultType } = calculatePoints(
+      { home: pred.homeScore, away: pred.awayScore },
+      { home: match.homeScore!, away: match.awayScore! },
+      config
+    );
+    await prisma.prediction.update({
+      where: { id: pred.id },
+      data: { pointsEarned: points, resultType },
+    });
+  }
 
   // Rebuild full leaderboard
   await rebuildLeaderboard(match.tournamentId);
