@@ -32,7 +32,7 @@ export default async function MatchDetailPage({ params }: { params: { id: string
   if (!match) return notFound();
 
   const userChances = user?.chances ?? 1;
-  const canPredict = match.status === "PENDING" && new Date() < match.scheduledAt;
+  const canPredict = match.status === "PENDING";
   const isFinished = match.status === "FINISHED";
   const isLive = match.status === "LIVE";
 

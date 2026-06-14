@@ -20,9 +20,6 @@ export async function POST(req: NextRequest) {
   if (match.status !== "PENDING") {
     return NextResponse.json({ error: "El partido ya comenzó o finalizó" }, { status: 400 });
   }
-  if (new Date() >= match.scheduledAt) {
-    return NextResponse.json({ error: "El período de pronóstico cerró" }, { status: 400 });
-  }
   if (chanceNumber < 1 || chanceNumber > (user?.chances ?? 1)) {
     return NextResponse.json({ error: "Chance no disponible" }, { status: 400 });
   }

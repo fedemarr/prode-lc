@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { MatchStatusControl } from "@/components/match-status-control";
+import { FixMatchTimesButton } from "@/components/fix-match-times-button";
 import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -19,9 +20,12 @@ export default async function AdminMatchesPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto w-full">
-      <div className="mb-6">
-        <h1 className="font-outfit text-2xl font-bold text-white">Partidos y Calendario</h1>
-        <p className="text-white/50 text-sm mt-1">{matches.length} partidos totales</p>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="font-outfit text-2xl font-bold text-white">Partidos y Calendario</h1>
+          <p className="text-white/50 text-sm mt-1">{matches.length} partidos totales</p>
+        </div>
+        <FixMatchTimesButton />
       </div>
 
       <div className="space-y-8">
