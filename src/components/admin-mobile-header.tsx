@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Users, Calendar, Trophy, Star, Download, Target, LogOut } from "lucide-react";
+import { Menu, X, LayoutDashboard, Users, Calendar, Trophy, Star, Download, Target, LogOut, ClipboardList } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -13,6 +13,7 @@ const navItems = [
   { href: "/admin/participants", label: "Participantes", icon: Users },
   { href: "/admin/matches", label: "Partidos", icon: Calendar },
   { href: "/admin/results", label: "Resultados", icon: Target },
+  { href: "/admin/votes", label: "Registro Votos", icon: ClipboardList },
   { href: "/admin/ranking", label: "Ranking", icon: Trophy },
   { href: "/admin/special", label: "Especiales", icon: Star },
   { href: "/admin/export", label: "Exportar", icon: Download },

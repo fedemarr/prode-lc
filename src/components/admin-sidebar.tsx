@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, Trophy, Star, Download, LogOut, Target } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Trophy, Star, Download, LogOut, Target, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/admin/participants", label: "Participantes", icon: Users },
   { href: "/admin/matches", label: "Partidos", icon: Calendar },
   { href: "/admin/results", label: "Resultados", icon: Target },
+  { href: "/admin/votes", label: "Registro Votos", icon: ClipboardList },
   { href: "/admin/ranking", label: "Ranking", icon: Trophy },
   { href: "/admin/special", label: "Especiales", icon: Star },
   { href: "/admin/export", label: "Exportar", icon: Download },
