@@ -162,6 +162,7 @@ export default async function MatchDetailPage({ params }: { params: { id: string
               initialAway={pred?.awayScore ?? 0}
               alreadySubmitted={!!pred}
               disabled={!canPredict}
+              scheduledAt={match.scheduledAt.toISOString()}
               chanceNumber={cn}
               totalChances={userChances}
             />
