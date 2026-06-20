@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Minus, Plus, Loader2, Lock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +18,6 @@ interface PredictionInputProps {
   disabled?: boolean;
   chanceNumber?: number;
   totalChances?: number;
-  scheduledAt?: string; // ISO string — for client-side real-time lock
 }
 
 export function PredictionInput({
@@ -33,7 +32,6 @@ export function PredictionInput({
   disabled = false,
   chanceNumber = 1,
   totalChances = 1,
-  scheduledAt,
 }: PredictionInputProps) {
   const { toast } = useToast();
   const [home, setHome] = useState(initialHome);
@@ -42,19 +40,7 @@ export function PredictionInput({
   const [submitted, setSubmitted] = useState(alreadySubmitted);
   const [confirmed, setConfirmed] = useState(false);
 
-  // Real-time lock: auto-disable exactly when match starts
-  const [lockedByTime, setLockedByTime] = useState(() =>
-    scheduledAt ? Date.now() >= new Date(scheduledAt).getTime() : false
-  );
-  useEffect(() => {
-    if (!scheduledAt) return;
-    const ms = new Date(scheduledAt).getTime() - Date.now();
-    if (ms <= 0) { setLockedByTime(true); return; }
-    const timer = setTimeout(() => setLockedByTime(true), ms);
-    return () => clearTimeout(timer);
-  }, [scheduledAt]);
-
-  const isDisabled = disabled || lockedByTime;
+  const isDisabled = disabled;
 
   async function save() {
     if (!confirmed) {

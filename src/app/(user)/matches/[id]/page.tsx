@@ -32,7 +32,7 @@ export default async function MatchDetailPage({ params }: { params: { id: string
   if (!match) return notFound();
 
   const userChances = user?.chances ?? 1;
-  const canPredict = match.status === "PENDING" && new Date() < new Date(match.scheduledAt);
+  const canPredict = match.status === "PENDING";
   const isFinished = match.status === "FINISHED";
   const isLive = match.status === "LIVE";
 
@@ -162,7 +162,6 @@ export default async function MatchDetailPage({ params }: { params: { id: string
               initialAway={pred?.awayScore ?? 0}
               alreadySubmitted={!!pred}
               disabled={!canPredict}
-              scheduledAt={match.scheduledAt.toISOString()}
               chanceNumber={cn}
               totalChances={userChances}
             />
