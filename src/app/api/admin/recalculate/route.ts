@@ -17,35 +17,43 @@ export async function POST(req: NextRequest) {
 
     const config = tournament.scoringConfig as { exact: number; winner: number };
 
-    // Get all finished matches with scores
+    // Fetch all finished matches and all their predictions in two queries
     const finishedMatches = await prisma.match.findMany({
       where: { tournamentId: tournament.id, status: "FINISHED" },
       select: { id: true, homeScore: true, awayScore: true },
     });
 
-    // Process each match sequentially to avoid connection pool issues
-    for (const match of finishedMatches) {
-      if (match.homeScore === null || match.awayScore === null) continue;
+    const matchIds = finishedMatches.map((m) => m.id);
+    const allPredictions = await prisma.prediction.findMany({
+      where: { matchId: { in: matchIds } },
+    });
 
-      const predictions = await prisma.prediction.findMany({
-        where: { matchId: match.id },
-      });
+    // Build result map for O(1) lookups
+    const resultMap = new Map(
+      finishedMatches
+        .filter((m) => m.homeScore !== null && m.awayScore !== null)
+        .map((m) => [m.id, { home: m.homeScore!, away: m.awayScore! }])
+    );
 
-      // Update predictions sequentially to stay within connection pool limit (5)
-      for (const pred of predictions) {
+    // Calculate all updates in memory, then batch in a single transaction
+    const updateOps = allPredictions
+      .filter((p) => resultMap.has(p.matchId))
+      .map((p) => {
+        const result = resultMap.get(p.matchId)!;
         const { points, resultType } = calculatePoints(
-          { home: pred.homeScore, away: pred.awayScore },
-          { home: match.homeScore!, away: match.awayScore! },
+          { home: p.homeScore, away: p.awayScore },
+          result,
           config
         );
-        await prisma.prediction.update({
-          where: { id: pred.id },
+        return prisma.prediction.update({
+          where: { id: p.id },
           data: { pointsEarned: points, resultType },
         });
-      }
-    }
+      });
 
-    // Rebuild group leaderboard (total) and knockout leaderboard
+    // Single transaction — one DB round-trip instead of N×M
+    await prisma.$transaction(updateOps);
+
     await rebuildLeaderboard(tournament.id);
     await rebuildKnockoutLeaderboard(tournament.id);
 
@@ -53,14 +61,14 @@ export async function POST(req: NextRequest) {
       where: { tournamentId: tournament.id, phase: "total" },
     });
 
-    const matchesProcessed = finishedMatches.length;
-    const totalPredictions = await prisma.prediction.count({
-      where: { matchId: { in: finishedMatches.map((m) => m.id) } },
+    return NextResponse.json({
+      ok: true,
+      usersUpdated,
+      matchesProcessed: finishedMatches.length,
+      totalPredictions: allPredictions.length,
     });
-
-    return NextResponse.json({ ok: true, usersUpdated, matchesProcessed, totalPredictions });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Recalculate error:", e);
-    return NextResponse.json({ error: e?.message ?? "Error interno" }, { status: 500 });
+    return NextResponse.json({ error: (e as Error)?.message ?? "Error interno" }, { status: 500 });
   }
 }

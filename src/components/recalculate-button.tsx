@@ -13,21 +13,26 @@ export function RecalculateButton() {
   async function recalculate() {
     if (!confirm("¿Recalcular ranking completo desde cero para todos los usuarios?")) return;
     setLoading(true);
-    const res = await fetch("/api/admin/recalculate", { method: "POST" });
-    setLoading(false);
+    try {
+      const res = await fetch("/api/admin/recalculate", { method: "POST" });
+      let data: Record<string, unknown> = {};
+      try { data = await res.json(); } catch { /* non-JSON response */ }
 
-    const data = await res.json();
+      if (!res.ok) {
+        toast({ title: "Error al recalcular", description: (data?.error as string) ?? "Error interno", variant: "destructive" });
+        return;
+      }
 
-    if (!res.ok) {
-      toast({ title: "Error al recalcular", description: data?.error ?? "Error interno", variant: "destructive" });
-      return;
+      toast({
+        title: "✓ Ranking recalculado",
+        description: `${data.matchesProcessed} partidos · ${data.totalPredictions} pronósticos · ${data.usersUpdated} usuarios`,
+      });
+      router.refresh();
+    } catch {
+      toast({ title: "Error al recalcular", description: "No se pudo conectar al servidor", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-
-    toast({
-      title: "✓ Ranking recalculado",
-      description: `${data.matchesProcessed} partidos · ${data.totalPredictions} pronósticos · ${data.usersUpdated} usuarios`,
-    });
-    router.refresh();
   }
 
   return (

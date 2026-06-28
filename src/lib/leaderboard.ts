@@ -40,9 +40,9 @@ async function buildLeaderboardForPhase(
     where: { tournamentId, phase },
     orderBy: [{ points: "desc" }, { exactHits: "desc" }, { winnerHits: "desc" }],
   });
-  for (let i = 0; i < entries.length; i++) {
-    await prisma.leaderboardEntry.update({ where: { id: entries[i].id }, data: { rankPosition: i + 1 } });
-  }
+  await prisma.$transaction(
+    entries.map((e, i) => prisma.leaderboardEntry.update({ where: { id: e.id }, data: { rankPosition: i + 1 } }))
+  );
 }
 
 export async function rebuildLeaderboard(tournamentId: string) {
@@ -56,18 +56,19 @@ export async function rebuildLeaderboard(tournamentId: string) {
 }
 
 export async function rebuildKnockoutLeaderboard(tournamentId: string) {
-  // Initialize all approved users at 0 for a clean slate on first run
   const allUsers = await prisma.user.findMany({
     where: { status: "APPROVED" },
     select: { id: true },
   });
-  for (const user of allUsers) {
-    await prisma.leaderboardEntry.upsert({
-      where: { userId_tournamentId_phase: { userId: user.id, tournamentId, phase: "knockout" } },
-      update: {},
-      create: { userId: user.id, tournamentId, phase: "knockout", points: 0, exactHits: 0, winnerHits: 0, rankPosition: 0 },
-    });
-  }
+
+  // Delete existing knockout entries then recreate — avoids sequential upserts
+  await prisma.leaderboardEntry.deleteMany({ where: { tournamentId, phase: "knockout" } });
+  await prisma.leaderboardEntry.createMany({
+    data: allUsers.map((u) => ({
+      userId: u.id, tournamentId, phase: "knockout", points: 0, exactHits: 0, winnerHits: 0, rankPosition: 0,
+    })),
+    skipDuplicates: true,
+  });
 
   const finishedKoMatches = await prisma.match.findMany({
     where: { tournamentId, status: "FINISHED", phase: { not: "GROUP" } },
@@ -79,24 +80,11 @@ export async function rebuildKnockoutLeaderboard(tournamentId: string) {
       where: { tournamentId, phase: "knockout" },
       orderBy: [{ points: "desc" }, { exactHits: "desc" }],
     });
-    for (let i = 0; i < entries.length; i++) {
-      await prisma.leaderboardEntry.update({ where: { id: entries[i].id }, data: { rankPosition: i + 1 } });
-    }
+    await prisma.$transaction(
+      entries.map((e, i) => prisma.leaderboardEntry.update({ where: { id: e.id }, data: { rankPosition: i + 1 } }))
+    );
     return;
   }
 
   await buildLeaderboardForPhase(tournamentId, "knockout", finishedKoMatches.map((m) => m.id));
-
-  // Ensure users with 0 ko points still appear (fill gaps)
-  const existingUserIds = new Set(
-    (await prisma.leaderboardEntry.findMany({ where: { tournamentId, phase: "knockout" }, select: { userId: true } }))
-      .map((e) => e.userId)
-  );
-  for (const user of allUsers) {
-    if (!existingUserIds.has(user.id)) {
-      await prisma.leaderboardEntry.create({
-        data: { userId: user.id, tournamentId, phase: "knockout", points: 0, exactHits: 0, winnerHits: 0, rankPosition: allUsers.length },
-      });
-    }
-  }
 }
