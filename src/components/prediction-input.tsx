@@ -42,10 +42,7 @@ export function PredictionInput({
   const [submitted, setSubmitted] = useState(alreadySubmitted);
   const [confirmed, setConfirmed] = useState(false);
 
-  // Se cierra solo cuando llega la hora del partido
-  const [lockedByTime, setLockedByTime] = useState(() =>
-    scheduledAt ? Date.now() >= new Date(scheduledAt).getTime() : false
-  );
+  const [lockedByTime, setLockedByTime] = useState(false);
   useEffect(() => {
     if (!scheduledAt) return;
     const ms = new Date(scheduledAt).getTime() - Date.now();

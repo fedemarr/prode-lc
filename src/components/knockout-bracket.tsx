@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Minus, Plus, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -111,14 +111,18 @@ function KnockoutMatchCard({ match, isFinal = false }: { match: Match; isFinal?:
   const [submitted, setSubmitted] = useState(match.predictions.length > 0);
   const [confirming, setConfirming] = useState(false);
 
-  const isPlaceholder = match.homeTeam.abbreviation === "MEX" && match.awayTeam.abbreviation === "USA"
-    && match.status === "PENDING" && match.homeScore === null && match.roundLabel.includes("Por definir") === false
-    && match.homeTeam.name === "México" && match.awayTeam.name === "Estados Unidos";
+  const [pastKickoff, setPastKickoff] = useState(false);
+  useEffect(() => {
+    const ms = new Date(match.scheduledAt).getTime() - Date.now();
+    if (ms <= 0) { setPastKickoff(true); return; }
+    const t = setTimeout(() => setPastKickoff(true), ms);
+    return () => clearTimeout(t);
+  }, [match.scheduledAt]);
 
   const tbd = match.homeTeam.name === "México" && match.awayTeam.name === "Estados Unidos"
     && match.homeScore === null && match.status === "PENDING";
 
-  const canPredict = !tbd && match.status === "PENDING" && !submitted && new Date() < new Date(match.scheduledAt);
+  const canPredict = !tbd && match.status === "PENDING" && !submitted && !pastKickoff;
   const isFinished = match.status === "FINISHED";
   const isLive = match.status === "LIVE";
 
