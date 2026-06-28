@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculatePoints } from "@/lib/scoring";
-import { rebuildLeaderboard } from "@/lib/leaderboard";
+import { rebuildLeaderboard, rebuildKnockoutLeaderboard } from "@/lib/leaderboard";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,8 +45,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Rebuild full leaderboard
+    // Rebuild group leaderboard (total) and knockout leaderboard
     await rebuildLeaderboard(tournament.id);
+    await rebuildKnockoutLeaderboard(tournament.id);
 
     const usersUpdated = await prisma.leaderboardEntry.count({
       where: { tournamentId: tournament.id, phase: "total" },
