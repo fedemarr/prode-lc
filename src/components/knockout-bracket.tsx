@@ -178,7 +178,7 @@ function KnockoutMatchCard({ match, isFinal = false }: { match: Match; isFinal?:
               ) : submitted ? (
                 <div className="text-center">
                   <p className="font-outfit text-lg font-black text-brand-yellow">
-                    {match.predictions[0].homeScore} — {match.predictions[0].awayScore}
+                    {match.predictions[0]?.homeScore ?? home} — {match.predictions[0]?.awayScore ?? away}
                   </p>
                   <p className="text-[9px] text-white/25 mt-0.5">Tu pronóstico</p>
                 </div>
@@ -228,7 +228,7 @@ function KnockoutMatchCard({ match, isFinal = false }: { match: Match; isFinal?:
           <div className="flex items-center justify-between bg-white/4 rounded-lg px-3 py-1.5">
             <span className="text-[10px] text-white/30">Pronóstico enviado</span>
             <span className="text-[10px] font-bold text-brand-yellow">
-              {match.predictions[0].homeScore} — {match.predictions[0].awayScore}
+              {match.predictions[0]?.homeScore ?? home} — {match.predictions[0]?.awayScore ?? away}
             </span>
           </div>
         </div>
