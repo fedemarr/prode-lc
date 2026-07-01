@@ -1,4 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+
+const BATCH = 500;
 
 async function buildLeaderboardForPhase(
   tournamentId: string,
@@ -28,21 +31,47 @@ async function buildLeaderboardForPhase(
     if (best.resultType === "WINNER") userStats[userId].winnerHits++;
   }
 
-  for (const [userId, stats] of Object.entries(userStats)) {
-    await prisma.leaderboardEntry.upsert({
-      where: { userId_tournamentId_phase: { userId, tournamentId, phase } },
-      update: { points: stats.points, exactHits: stats.exactHits, winnerHits: stats.winnerHits },
-      create: { userId, tournamentId, phase, points: stats.points, exactHits: stats.exactHits, winnerHits: stats.winnerHits, rankPosition: 0 },
-    });
+  // Batch upsert: INSERT ... ON CONFLICT DO UPDATE — one query per 500 users
+  const statsEntries = Object.entries(userStats);
+  for (let i = 0; i < statsEntries.length; i += BATCH) {
+    const chunk = statsEntries.slice(i, i + BATCH);
+    await prisma.$executeRaw(
+      Prisma.sql`
+        INSERT INTO "LeaderboardEntry" ("id", "userId", "tournamentId", "phase", "points", "exactHits", "winnerHits", "rankPosition", "updatedAt")
+        VALUES ${Prisma.join(
+          chunk.map(([userId, stats]) =>
+            Prisma.sql`(gen_random_uuid()::text, ${userId}, ${tournamentId}, ${phase}, ${stats.points}, ${stats.exactHits}, ${stats.winnerHits}, 0, NOW())`
+          )
+        )}
+        ON CONFLICT ("userId", "tournamentId", "phase")
+        DO UPDATE SET
+          "points"     = EXCLUDED."points",
+          "exactHits"  = EXCLUDED."exactHits",
+          "winnerHits" = EXCLUDED."winnerHits",
+          "updatedAt"  = NOW()
+      `
+    );
   }
 
   const entries = await prisma.leaderboardEntry.findMany({
     where: { tournamentId, phase },
     orderBy: [{ points: "desc" }, { exactHits: "desc" }, { winnerHits: "desc" }],
   });
-  await prisma.$transaction(
-    entries.map((e, i) => prisma.leaderboardEntry.update({ where: { id: e.id }, data: { rankPosition: i + 1 } }))
-  );
+
+  // Batch rank update: UPDATE FROM (VALUES ...) — one query per 500 entries
+  for (let i = 0; i < entries.length; i += BATCH) {
+    const chunk = entries.slice(i, i + BATCH);
+    await prisma.$executeRaw(
+      Prisma.sql`
+        UPDATE "LeaderboardEntry" AS le
+        SET "rankPosition" = v.rank
+        FROM (VALUES ${Prisma.join(
+          chunk.map((e, j) => Prisma.sql`(${e.id}::text, ${i + j + 1}::int)`)
+        )}) AS v(id, rank)
+        WHERE le.id = v.id
+      `
+    );
+  }
 }
 
 export async function rebuildLeaderboard(tournamentId: string) {
@@ -80,9 +109,19 @@ export async function rebuildKnockoutLeaderboard(tournamentId: string) {
       where: { tournamentId, phase: "knockout" },
       orderBy: [{ points: "desc" }, { exactHits: "desc" }],
     });
-    await prisma.$transaction(
-      entries.map((e, i) => prisma.leaderboardEntry.update({ where: { id: e.id }, data: { rankPosition: i + 1 } }))
-    );
+    for (let i = 0; i < entries.length; i += BATCH) {
+      const chunk = entries.slice(i, i + BATCH);
+      await prisma.$executeRaw(
+        Prisma.sql`
+          UPDATE "LeaderboardEntry" AS le
+          SET "rankPosition" = v.rank
+          FROM (VALUES ${Prisma.join(
+            chunk.map((e, j) => Prisma.sql`(${e.id}::text, ${i + j + 1}::int)`)
+          )}) AS v(id, rank)
+          WHERE le.id = v.id
+        `
+      );
+    }
     return;
   }
 

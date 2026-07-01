@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { calculatePoints } from "@/lib/scoring";
 import { rebuildLeaderboard, rebuildKnockoutLeaderboard } from "@/lib/leaderboard";
@@ -35,8 +36,8 @@ export async function POST(req: NextRequest) {
         .map((m) => [m.id, { home: m.homeScore!, away: m.awayScore! }])
     );
 
-    // Calculate all updates in memory, then batch in a single transaction
-    const updateOps = allPredictions
+    // Calculate all updates in memory, then batch UPDATE via VALUES — ~500 rows per query
+    const updates = allPredictions
       .filter((p) => resultMap.has(p.matchId))
       .map((p) => {
         const result = resultMap.get(p.matchId)!;
@@ -45,14 +46,24 @@ export async function POST(req: NextRequest) {
           result,
           config
         );
-        return prisma.prediction.update({
-          where: { id: p.id },
-          data: { pointsEarned: points, resultType },
-        });
+        return { id: p.id, points, resultType };
       });
 
-    // Single transaction — one DB round-trip instead of N×M
-    await prisma.$transaction(updateOps);
+    const BATCH = 500;
+    for (let i = 0; i < updates.length; i += BATCH) {
+      const chunk = updates.slice(i, i + BATCH);
+      await prisma.$executeRaw(
+        Prisma.sql`
+          UPDATE "Prediction" AS p
+          SET "pointsEarned" = v.points,
+              "resultType"   = v.rt::"ResultType"
+          FROM (VALUES ${Prisma.join(
+            chunk.map((u) => Prisma.sql`(${u.id}::text, ${u.points}::int, ${u.resultType}::text)`)
+          )}) AS v(id, points, rt)
+          WHERE p.id = v.id
+        `
+      );
+    }
 
     await rebuildLeaderboard(tournament.id);
     await rebuildKnockoutLeaderboard(tournament.id);
