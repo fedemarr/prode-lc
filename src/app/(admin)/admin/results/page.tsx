@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { MatchResultLoader } from "@/components/match-result-loader";
 import { RecalculateButton } from "@/components/recalculate-button";

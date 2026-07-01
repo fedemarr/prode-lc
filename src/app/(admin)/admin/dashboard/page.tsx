@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { Users, Clock, Calendar, Trophy } from "lucide-react";
 import Link from "next/link";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { SpecialAnswerForm } from "@/components/special-answer-form";
 import { Badge } from "@/components/ui/badge";

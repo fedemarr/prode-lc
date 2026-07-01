@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { MatchStatusControl } from "@/components/match-status-control";
 import { FixMatchTimesButton } from "@/components/fix-match-times-button";
