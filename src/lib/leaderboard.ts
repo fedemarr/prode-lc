@@ -10,25 +10,17 @@ async function buildLeaderboardForPhase(
 ) {
   const allPredictions = await prisma.prediction.findMany({
     where: { matchId: { in: matchIds } },
-    select: { userId: true, matchId: true, pointsEarned: true, resultType: true },
+    select: { userId: true, pointsEarned: true, resultType: true },
   });
 
-  const bestPerUserMatch: Record<string, { points: number; resultType: string | null }> = {};
-  for (const pred of allPredictions) {
-    const key = `${pred.userId}::${pred.matchId}`;
-    const pts = pred.pointsEarned ?? 0;
-    if (!(key in bestPerUserMatch) || pts > bestPerUserMatch[key].points) {
-      bestPerUserMatch[key] = { points: pts, resultType: pred.resultType };
-    }
-  }
-
+  // Sumar TODOS los votos y chances de cada usuario (no solo el mejor por partido)
   const userStats: Record<string, { points: number; exactHits: number; winnerHits: number }> = {};
-  for (const [key, best] of Object.entries(bestPerUserMatch)) {
-    const userId = key.split("::")[0];
-    if (!userStats[userId]) userStats[userId] = { points: 0, exactHits: 0, winnerHits: 0 };
-    userStats[userId].points += best.points;
-    if (best.resultType === "EXACT") userStats[userId].exactHits++;
-    if (best.resultType === "WINNER") userStats[userId].winnerHits++;
+  for (const pred of allPredictions) {
+    const pts = pred.pointsEarned ?? 0;
+    if (!userStats[pred.userId]) userStats[pred.userId] = { points: 0, exactHits: 0, winnerHits: 0 };
+    userStats[pred.userId].points += pts;
+    if (pred.resultType === "EXACT") userStats[pred.userId].exactHits++;
+    if (pred.resultType === "WINNER") userStats[pred.userId].winnerHits++;
   }
 
   // Batch upsert: INSERT ... ON CONFLICT DO UPDATE — one query per 500 users
